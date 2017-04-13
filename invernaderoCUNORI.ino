@@ -107,11 +107,11 @@ void encenderActuadores(){//funcion que activa los actuadores si es necesario
         extractores[counter-1]=1;
         tiempos[counter-1]=now();
         //secuencia de activacion de actuadores
-        digitalWrite(pinComp, HIGH);
         digitalWrite(pinValv, HIGH);
+        digitalWrite(pinComp, HIGH);
         delay(tiempoNeb);
-        digitalWrite(pinValv, LOW);
         digitalWrite(pinComp, LOW);
+        digitalWrite(pinValv, LOW);
         digitalWrite(pinExtA, HIGH);
         digitalWrite(pinExtB, HIGH);
         delay(tiempoExt);
@@ -124,11 +124,11 @@ void encenderActuadores(){//funcion que activa los actuadores si es necesario
         extractores[counter-1]=0;
         tiempos[counter-1]=now();
         //secuencia de activacion de actuadores
-        digitalWrite(pinComp, HIGH);
         digitalWrite(pinValv, HIGH);
+        digitalWrite(pinComp, HIGH);
         delay(tiempoNeb);
-        digitalWrite(pinValv, LOW);
         digitalWrite(pinComp, LOW);
+        digitalWrite(pinValv, LOW);
         readData();
         }else{
             //guardando datos para los arregos de status
@@ -227,4 +227,5 @@ void sendData(){
              Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
             }
  }
-  
+} 
+
