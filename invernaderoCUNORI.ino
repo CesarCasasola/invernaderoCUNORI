@@ -36,6 +36,14 @@ int extractores[4];
 int nebulizadores[4];
 time_t tiempos[4];
 
+//Variables de inicio fecha
+int anio;
+int mes;
+int dia;
+int hora;
+int minu;
+int seg;
+
 void setup() {
   Serial.begin(115200);// comunicacion arduino-pc para debug
   Serial1.begin(115200); /*comunicacion TTL con  ESP8266
@@ -50,7 +58,9 @@ void setup() {
   reestablecerArreglos();
 
   //TODO: funcion establecerTiempo que recibira los datos del servidor
-  setTime(9,58,00,11,4,2017);
+  datenow();
+  setTime(hora,minu,seg,dia,mes,anio);
+  //setTime(9,58,00,11,4,2017);
   iniciar();
 }
 
@@ -94,7 +104,7 @@ void readData(){
         readData();
       }else{
         if(counter == 4){//cuando se haya terminado una secuencia de cuatro ciclos de medicion y activacion de actuadores
-            datos = "temp1="+ temperatura[0] +"&hume1="+ humedad[0] +"&extrac1="+ extractores[0] +"&nebu1="+ nebulizadores[0] +"&tiemp1="+ tiempos[0] +"&temp2="+ temperatura[1] +"&hume2="+ humedad[1] +"&extrac2="+ extractores[1] +"&nebu2="+ nebulizadores[1] +"&tiemp2="+ tiempos[1]+"&temp3="+ temperatura[2] +"&hume3="+ humedad[2] +"&extrac3="+ extractores[2] +"&nebu3="+ nebulizadores[2] +"&tiemp3="+ tiempos[2]+"&temp4="+ temperatura[3] +"&hume4="+ humedad[3] +"&extrac4="+ extractores[3] +"&nebu4="+ nebulizadores[3] +"&tiemp4="+ tiempos[3];
+            dateuri();
             sendData();
           }
         }
@@ -107,11 +117,11 @@ void encenderActuadores(){//funcion que activa los actuadores si es necesario
         extractores[counter-1]=1;
         tiempos[counter-1]=now();
         //secuencia de activacion de actuadores
-        digitalWrite(pinValv, HIGH);
         digitalWrite(pinComp, HIGH);
+        digitalWrite(pinValv, HIGH);
         delay(tiempoNeb);
-        digitalWrite(pinComp, LOW);
         digitalWrite(pinValv, LOW);
+        digitalWrite(pinComp, LOW);
         digitalWrite(pinExtA, HIGH);
         digitalWrite(pinExtB, HIGH);
         delay(tiempoExt);
@@ -124,11 +134,11 @@ void encenderActuadores(){//funcion que activa los actuadores si es necesario
         extractores[counter-1]=0;
         tiempos[counter-1]=now();
         //secuencia de activacion de actuadores
-        digitalWrite(pinValv, HIGH);
         digitalWrite(pinComp, HIGH);
+        digitalWrite(pinValv, HIGH);
         delay(tiempoNeb);
-        digitalWrite(pinComp, LOW);
         digitalWrite(pinValv, LOW);
+        digitalWrite(pinComp, LOW);
         readData();
         }else{
             //guardando datos para los arregos de status
@@ -164,6 +174,76 @@ int controlarTemperatura(){/*la variable de returno se inicializa con 1/true, si
     return activar;
   }
 
+void datenow(){
+   uri = "/invernadero/datetime.php?codigo=1";
+   Serial1.println("AT+CIPSTART=\"TCP\",\""+ server +"\",80");
+   Serial.println("AT+CIPSTART=\"TCP\",\""+ server +"\",80");//echo del comando anterior
+
+   if(Serial1.find("OK")){//respuesta en caso de establecer conexion TCP exitosa
+      Serial.println("Conexion TCP lista.");
+     }
+   String getRequest =
+  
+   "GET " + uri + " HTTP/1.0\r\n" +
+  
+   "Host: " + server + "\r\n\r\n";
+  
+    String sendCmd = "AT+CIPSEND=";//comando para enviar datos, seguido se debe escribir la longitud de datos a enviarse, maximo 2048
+
+   Serial1.print(sendCmd);
+   Serial.print(sendCmd);//echo
+
+   Serial1.println(getRequest.length());//longitud de los datos que se enviaran, para completar comando AT+CIPSEND
+   Serial.println(getRequest.length());//echo
+
+    delay(1000);
+
+   if(Serial1.find(">")){//el comando CIPSEND retorna ">" despues de ejecutarse y esta listo para enviar datos a continuacion
+          Serial.println("Sending....");
+          Serial1.print(getRequest);
+          Serial.print(getRequest);
+          
+
+          
+          if(Serial1.find("SEND OK")){//mensaje que se recibe al enviar exitosamente los datos
+               Serial.println("SEND OK");
+               
+               String result = "";//contendra el json
+               boolean httpBody = false;   //bandera que indica que parte del response se esta leyendo        
+               while(Serial1.available()){ //leyendo respuesta
+                  String tmp = Serial1.readString();
+                  result = tmp.substring(tmp.indexOf('{'), tmp.indexOf('}')+1);
+                                          
+                }
+                int tam = result.length()+1;
+                char json[tam];
+                result.toCharArray(json, tam);
+                StaticJsonBuffer<JSON_OBJECT_SIZE(2)> jsonBuffer;
+                JsonObject& root = jsonBuffer.parseObject(json);
+                if(!root.success()){
+                    Serial.println("No se pudo parsear el json.");
+                  }else{
+                        anio = root["Anio"];
+                        mes = root["Mes"];
+                        dia = root["Dia"];
+                        hora = root["Hora"];
+                        minu = root["Minuto"];
+                        seg = root["Segundo"];
+                        Serial.println("Anio: "+ (String)anio + 
+                                      " Mes: "+(String)mes +
+                                      "Dia: "+(String)dia +
+                                      " -- Hora: "+(String)hora +
+                                      "Minuto: "+(String)minu +
+                                      "Segundo: "+(String)seg);
+                    }
+                
+        
+             //cerrar conexion
+             Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
+            }
+    }
+ }
+  
 void sendData(){
     uri = "/invernadero/Lectorjson.php?"+datos;
 
@@ -227,5 +307,16 @@ void sendData(){
              Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
             }
  }
-} 
+}
 
+void dateuri(){
+  int i;
+  for(i=1; i<5; i++){
+    if(i==1){
+      datos + = "temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1] +"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +" "+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
+    }
+    if(i>1){
+      datos + = "&temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1] +"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +" "+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
+      }
+    }
+  }
