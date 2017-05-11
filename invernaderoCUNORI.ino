@@ -44,6 +44,12 @@ int hora;
 int minu;
 int seg;
 
+
+void datauri();
+void sendData();
+String decodeJson(String Json, String key);
+
+
 void setup() {
   Serial.begin(115200);// comunicacion arduino-pc para debug
   Serial1.begin(115200); /*comunicacion TTL con  ESP8266
@@ -183,9 +189,7 @@ void datenow(){
    if(Serial1.find("OK")){//respuesta en caso de establecer conexion TCP exitosa
       Serial.println("Conexion TCP lista.");
 
-     }
-
-           String getRequest =
+      String getRequest =
   
        "GET " + uri + " HTTP/1.0\r\n" +
       
@@ -220,20 +224,13 @@ void datenow(){
                                               
                     }
                     Serial.println(result);
-                    int tam = result.length()+1;
-                    char json[tam];
-                    result.toCharArray(json, tam);
-                    StaticJsonBuffer<JSON_OBJECT_SIZE(2)> jsonBuffer;
-                    JsonObject& root = jsonBuffer.parseObject(json);
-                    if(!root.success()){
-                        Serial.println("No se pudo parsear el json.");
-                      }else{
-                            anio = root["Anio"];
-                            mes = root["Mes"];
-                            dia = root["Dia"];
-                            hora = root["Hora"];
-                            minu = root["Minuto"];
-                            seg = root["Segundo"];
+                    
+                            anio = decodeJson(result, "Anio").toInt();
+                            mes = decodeJson(result, "Mes").toInt();
+                            dia = decodeJson(result, "Dia").toInt();
+                            hora = decodeJson(result, "Hora").toInt();
+                            minu = decodeJson(result, "Minuto").toInt();
+                            seg = decodeJson(result, "Segundo").toInt();
                             Serial.println("Anio: "+ (String)anio + 
                                           " Mes: "+(String)mes +
                                           "Dia: "+(String)dia +
@@ -245,7 +242,7 @@ void datenow(){
             
                  //cerrar conexion
                  Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
-                }
+                }           
             }
    
  }
@@ -290,44 +287,48 @@ void sendData(){
                      boolean httpBody = false;   //bandera que indica que parte del response se esta leyendo        
                      while(Serial1.available()){ //leyendo respuesta
                         String tmp = Serial1.readString();
-                        result = tmp.substring(tmp.indexOf('{'), tmp.indexOf('}')+1);
-                        
+                        result = tmp.substring(tmp.indexOf('{'), tmp.indexOf('}')+1);                     
                                          
                       }
-                      int tam = result.length()+1;
-                      char json[tam];
-                      result.toCharArray(json, tam);
-                      StaticJsonBuffer<JSON_OBJECT_SIZE(2)> jsonBuffer;
-                      JsonObject& root = jsonBuffer.parseObject(json);
-                      if(!root.success()){
-                          Serial.println("No se pudo parsear el json.");
-                        }else{
-                              humMinima = root["HumedadMiin"];
-                              tempMaxima = root["TemperaturaMax"];
-                              Serial.println("Humedad Minima: "+ (String)humMinima + " Temperatura Maxima: "+(String)tempMaxima);
+                      Serial.println(result);
+                      humMinima = decodeJson(result, "HumedadMiin").toFloat();
+                      tempMaxima = decodeJson(result, "TemperaturaMax").toFloat();
+                      Serial.println("Humedad Minima: "+ (String)humMinima + " Temperatura Maxima: "+(String)tempMaxima);
                           }
                       
               
                    //cerrar conexion
                    Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
                   }
-       }
-     }else{//la conexion no se establecio, por lo que se intenta nuevamente llamando de forma recursiva al metodo.
+       }else{//la conexion no se establecio, por lo que se intenta nuevamente llamando de forma recursiva al metodo.
            iniciar();
            sendData();
       }
-     
 }
+     
+
 
 void datauri(){
   int i;
   for(i=1; i<5; i++){
     if(i==1){
-      datos = datos + "temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +""+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
-    }
+      datos = datos + "temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +""+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));    }
     if(i>1){
-      datos = datos + "&temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +""+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
-      }
+      datos = datos + "&temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +""+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));      }
     }
   }
+  
+
+String decodeJson(String Json, String key){
+    key = "\""+key+"\"";
+    int posKeyEnd = Json.indexOf(key)+key.length();
+    //Serial.println(posKeyEnd);
+    
+    String valueApr = Json.substring( posKeyEnd, Json.indexOf(',', posKeyEnd+1));
+    //Serial.println(valueApr);
+    int posQuo1 = valueApr.indexOf('"');
+    String value = valueApr.substring(posQuo1+1, valueApr.indexOf('"', posQuo1+1));
+    //Serial.println(value);
+    return value;    
+  } 
 
