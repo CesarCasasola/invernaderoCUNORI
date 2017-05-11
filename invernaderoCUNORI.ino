@@ -7,7 +7,7 @@
 String ssid = "CRed";
 String password = "a2b4c6d8";
 
-String server = "192.168.43.130"; //IP del server
+String server = "192.168.43.240"; //IP del server
 String uri = "/invernadero/Lectorjson.php"; //uri de php que responde a request de arduino
 
 String datos = "";
@@ -27,8 +27,8 @@ DHT dht(DHTPIN, DHTTYPE);
 
 //variables globales
 int counter;
-float humMinima;
-float tempMaxima;
+float humMinima = 50;
+float tempMaxima = 20;
 float temperatura[4];
 float humedad[4];
 //arreglos para status de actuadores y tiempo
@@ -47,7 +47,7 @@ int seg;
 void setup() {
   Serial.begin(115200);// comunicacion arduino-pc para debug
   Serial1.begin(115200); /*comunicacion TTL con  ESP8266
-                          Serial1  (RX=19, TX=18)*/
+                          Serial1*/
                           
   pinMode(pinExtA, OUTPUT);
   pinMode(pinExtB, OUTPUT);
@@ -57,18 +57,20 @@ void setup() {
   int counter = 0;
   reestablecerArreglos();
 
-  //TODO: funcion establecerTiempo que recibira los datos del servidor
+  iniciar();
   datenow();
   setTime(hora,minu,seg,dia,mes,anio);
-  //setTime(9,58,00,11,4,2017);
-  iniciar();
+  
+  
 }
 
 void iniciar(){
   delay(1000);
   String connStr = "AT+CWJAP=\""+ssid+"\",\""+password+"\"";//comando AT para conectarse a una red
   Serial1.println(connStr);
+  Serial.println(connStr);
   delay(5000);
+  Serial.println(Serial1.read());
 }
 
 void reestablecerArreglos(){//reestablece el valor de los arreglos que le sirven como memoria al programa
@@ -104,8 +106,9 @@ void readData(){
         readData();
       }else{
         if(counter == 4){//cuando se haya terminado una secuencia de cuatro ciclos de medicion y activacion de actuadores
-            dateuri();
+            datauri();
             sendData();
+            counter = 0;
           }
         }
   }
@@ -127,7 +130,7 @@ void encenderActuadores(){//funcion que activa los actuadores si es necesario
         delay(tiempoExt);
         digitalWrite(pinExtA, LOW);
         digitalWrite(pinExtB, LOW);
-        readData();
+        
       }else if(controlarHumedad()){
         //guardando datos para los arregos de status
         nebulizadores[counter-1]=1;
@@ -139,14 +142,12 @@ void encenderActuadores(){//funcion que activa los actuadores si es necesario
         delay(tiempoNeb);
         digitalWrite(pinValv, LOW);
         digitalWrite(pinComp, LOW);
-        readData();
-        }else{
+       }else{
             //guardando datos para los arregos de status
             nebulizadores[counter-1]=0;
             extractores[counter-1]=0;
             tiempos[counter-1]=now();
-            readData();
-          }
+          }       
   }
 
 int controlarTemperatura(){/*la variable de returno se inicializa con 1/true, si en el reccorrido del arreglo hay un valor que sea 0 o este en el rango
@@ -154,7 +155,7 @@ int controlarTemperatura(){/*la variable de returno se inicializa con 1/true, si
     int activar = 1;
     int i;
     for(i=0; i<4; i++){
-        Serial.println((String)i +": Temperatura: "+(String)temperatura[i]+" Humedad: "+(String)humedad[i]+" Minuto: "+ (String)(minute(tiempos[i])));
+        Serial.println((String)i +": Temperatura: "+(String)temperatura[i]+" Humedad: "+(String)humedad[i]+" Tiempo: "+(String)minute(tiempos[i]));
         if(temperatura[i]>=tempMaxima || temperatura[i] == 0){
             activar = 0;
           }
@@ -181,67 +182,72 @@ void datenow(){
 
    if(Serial1.find("OK")){//respuesta en caso de establecer conexion TCP exitosa
       Serial.println("Conexion TCP lista.");
+
      }
-   String getRequest =
+
+           String getRequest =
   
-   "GET " + uri + " HTTP/1.0\r\n" +
-  
-   "Host: " + server + "\r\n\r\n";
-  
-    String sendCmd = "AT+CIPSEND=";//comando para enviar datos, seguido se debe escribir la longitud de datos a enviarse, maximo 2048
-
-   Serial1.print(sendCmd);
-   Serial.print(sendCmd);//echo
-
-   Serial1.println(getRequest.length());//longitud de los datos que se enviaran, para completar comando AT+CIPSEND
-   Serial.println(getRequest.length());//echo
-
-    delay(1000);
-
-   if(Serial1.find(">")){//el comando CIPSEND retorna ">" despues de ejecutarse y esta listo para enviar datos a continuacion
-          Serial.println("Sending....");
-          Serial1.print(getRequest);
-          Serial.print(getRequest);
-          
-
-          
-          if(Serial1.find("SEND OK")){//mensaje que se recibe al enviar exitosamente los datos
-               Serial.println("SEND OK");
-               
-               String result = "";//contendra el json
-               boolean httpBody = false;   //bandera que indica que parte del response se esta leyendo        
-               while(Serial1.available()){ //leyendo respuesta
-                  String tmp = Serial1.readString();
-                  result = tmp.substring(tmp.indexOf('{'), tmp.indexOf('}')+1);
-                                          
-                }
-                int tam = result.length()+1;
-                char json[tam];
-                result.toCharArray(json, tam);
-                StaticJsonBuffer<JSON_OBJECT_SIZE(2)> jsonBuffer;
-                JsonObject& root = jsonBuffer.parseObject(json);
-                if(!root.success()){
-                    Serial.println("No se pudo parsear el json.");
-                  }else{
-                        anio = root["Anio"];
-                        mes = root["Mes"];
-                        dia = root["Dia"];
-                        hora = root["Hora"];
-                        minu = root["Minuto"];
-                        seg = root["Segundo"];
-                        Serial.println("Anio: "+ (String)anio + 
-                                      " Mes: "+(String)mes +
-                                      "Dia: "+(String)dia +
-                                      " -- Hora: "+(String)hora +
-                                      "Minuto: "+(String)minu +
-                                      "Segundo: "+(String)seg);
+       "GET " + uri + " HTTP/1.0\r\n" +
+      
+       "Host: " + server + "\r\n\r\n";
+      
+        String sendCmd = "AT+CIPSEND=";//comando para enviar datos, seguido se debe escribir la longitud de datos a enviarse, maximo 2048
+    
+       Serial1.print(sendCmd);
+       Serial.print(sendCmd);//echo
+       Serial.print(getRequest);
+    
+       Serial1.println(getRequest.length());//longitud de los datos que se enviaran, para completar comando AT+CIPSEND
+       Serial.println(getRequest.length());//echo
+    
+        delay(1000);
+    
+       if(Serial1.find(">")){//el comando CIPSEND retorna ">" despues de ejecutarse y esta listo para enviar datos a continuacion
+              Serial.println("Sending....");
+              Serial1.print(getRequest);
+              Serial.print(getRequest);
+              
+    
+              
+              if(Serial1.find("SEND OK")){//mensaje que se recibe al enviar exitosamente los datos
+                   Serial.println("SEND OK");
+                   
+                   String result = "";//contendra el json
+                   boolean httpBody = false;   //bandera que indica que parte del response se esta leyendo        
+                   while(Serial1.available()){ //leyendo respuesta
+                      String tmp = Serial1.readString();
+                      result = tmp.substring(tmp.indexOf('{'), tmp.indexOf('}')+1);
+                                              
                     }
-                
-        
-             //cerrar conexion
-             Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
+                    Serial.println(result);
+                    int tam = result.length()+1;
+                    char json[tam];
+                    result.toCharArray(json, tam);
+                    StaticJsonBuffer<JSON_OBJECT_SIZE(2)> jsonBuffer;
+                    JsonObject& root = jsonBuffer.parseObject(json);
+                    if(!root.success()){
+                        Serial.println("No se pudo parsear el json.");
+                      }else{
+                            anio = root["Anio"];
+                            mes = root["Mes"];
+                            dia = root["Dia"];
+                            hora = root["Hora"];
+                            minu = root["Minuto"];
+                            seg = root["Segundo"];
+                            Serial.println("Anio: "+ (String)anio + 
+                                          " Mes: "+(String)mes +
+                                          "Dia: "+(String)dia +
+                                          " -- Hora: "+(String)hora +
+                                          "Minuto: "+(String)minu +
+                                          "Segundo: "+(String)seg);
+                        }
+                    
+            
+                 //cerrar conexion
+                 Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
+                }
             }
-    }
+   
  }
   
 void sendData(){
@@ -253,70 +259,75 @@ void sendData(){
 
      if(Serial1.find("OK")){//respuesta en caso de establecer conexion TCP exitosa
       Serial.println("Conexion TCP lista.");
-     }
-      String getRequest =
+       String getRequest =
   
-  "GET " + uri + " HTTP/1.0\r\n" +
-  
-  "Host: " + server + "\r\n\r\n";
-  
-  String sendCmd = "AT+CIPSEND=";//comando para enviar datos, seguido se debe escribir la longitud de datos a enviarse, maximo 2048
-
-  Serial1.print(sendCmd);
-    Serial.print(sendCmd);//echo
-
-  Serial1.println(getRequest.length());//longitud de los datos que se enviaran, para completar comando AT+CIPSEND
-    Serial.println(getRequest.length());//echo
-
-  delay(1000);
-
-  if(Serial1.find(">")){//el comando CIPSEND retorna ">" despues de ejecutarse y esta listo para enviar datos a continuacion
-          Serial.println("Sending....");
-          Serial1.print(getRequest);
-          Serial.print(getRequest);
-          
-
-          
-          if(Serial1.find("SEND OK")){//mensaje que se recibe al enviar exitosamente los datos
-               Serial.println("SEND OK");
-               
-
-               String result = "";//contendra el json
-               boolean httpBody = false;   //bandera que indica que parte del response se esta leyendo        
-               while(Serial1.available()){ //leyendo respuesta
-                  String tmp = Serial1.readString();
-                  result = tmp.substring(tmp.indexOf('{'), tmp.indexOf('}')+1);
-                  
-                                   
-                }
-                int tam = result.length()+1;
-                char json[tam];
-                result.toCharArray(json, tam);
-                StaticJsonBuffer<JSON_OBJECT_SIZE(2)> jsonBuffer;
-                JsonObject& root = jsonBuffer.parseObject(json);
-                if(!root.success()){
-                    Serial.println("No se pudo parsear el json.");
-                  }else{
-                        humMinima = root["HumedadMiin"];
-                        tempMaxima = root["TemperaturaMax"];
-                        Serial.println("Humedad Minima: "+ (String)humMinima + " Temperatura Maxima: "+(String)tempMaxima);
-                    }
-                
+        "GET " + uri + " HTTP/1.0\r\n" +
         
-             //cerrar conexion
-             Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
-            }
- }
+        "Host: " + server + "\r\n\r\n";
+        
+        String sendCmd = "AT+CIPSEND=";//comando para enviar datos, seguido se debe escribir la longitud de datos a enviarse, maximo 2048
+      
+        Serial1.print(sendCmd);
+          Serial.print(sendCmd);//echo
+      
+        Serial1.println(getRequest.length());//longitud de los datos que se enviaran, para completar comando AT+CIPSEND
+          Serial.println(getRequest.length());//echo
+      
+        delay(1000);
+      
+        if(Serial1.find(">")){//el comando CIPSEND retorna ">" despues de ejecutarse y esta listo para enviar datos a continuacion
+                Serial.println("Sending....");
+                Serial1.print(getRequest);
+                Serial.print(getRequest);
+                
+      
+                
+                if(Serial1.find("SEND OK")){//mensaje que se recibe al enviar exitosamente los datos
+                     Serial.println("SEND OK");
+                     
+      
+                     String result = "";//contendra el json
+                     boolean httpBody = false;   //bandera que indica que parte del response se esta leyendo        
+                     while(Serial1.available()){ //leyendo respuesta
+                        String tmp = Serial1.readString();
+                        result = tmp.substring(tmp.indexOf('{'), tmp.indexOf('}')+1);
+                        
+                                         
+                      }
+                      int tam = result.length()+1;
+                      char json[tam];
+                      result.toCharArray(json, tam);
+                      StaticJsonBuffer<JSON_OBJECT_SIZE(2)> jsonBuffer;
+                      JsonObject& root = jsonBuffer.parseObject(json);
+                      if(!root.success()){
+                          Serial.println("No se pudo parsear el json.");
+                        }else{
+                              humMinima = root["HumedadMiin"];
+                              tempMaxima = root["TemperaturaMax"];
+                              Serial.println("Humedad Minima: "+ (String)humMinima + " Temperatura Maxima: "+(String)tempMaxima);
+                          }
+                      
+              
+                   //cerrar conexion
+                   Serial1.println("AT+CIPCLOSE");//cierra la conexion TCP o UDP
+                  }
+       }
+     }else{//la conexion no se establecio, por lo que se intenta nuevamente llamando de forma recursiva al metodo.
+           iniciar();
+           sendData();
+      }
+     
 }
 
-void dateuri(){
+void datauri(){
   int i;
   for(i=1; i<5; i++){
     if(i==1){
-      datos + = "temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1] +"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +" "+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
+      datos = datos + "temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +" "+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
     }
     if(i>1){
-      datos + = "&temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1] +"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +" "+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
+      datos = datos + "&temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +" "+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));
       }
     }
   }
+
