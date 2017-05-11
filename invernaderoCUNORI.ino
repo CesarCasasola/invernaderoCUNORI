@@ -312,9 +312,9 @@ void datauri(){
   int i;
   for(i=1; i<5; i++){
     if(i==1){
-      datos = datos + "temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +""+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));    }
+      datos = datos + "temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +"-"+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));    }
     if(i>1){
-      datos = datos + "&temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +""+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));      }
+      datos = datos + "&temp"+ (String)i +"="+ (String)temperatura[i-1] +"&hume"+ (String)i +"="+ (String)humedad[i-1] +"&extrac"+ (String)i +"="+ (String)extractores[i-1] +"&nebu"+ (String)i +"="+ (String)nebulizadores[i-1]+"&tiemp"+ (String)i +"="+ (String)(year(tiempos[i-1]))+"-"+(String)(month(tiempos[i-1]))+"-"+(String)(day(tiempos[i-1])) +"-"+(String)(hour(tiempos[i-1]))+":"+(String)(minute(tiempos[i-1]))+":"+(String)(second(tiempos[i-1]));      }
     }
   }
   
