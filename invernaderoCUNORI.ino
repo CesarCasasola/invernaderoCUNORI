@@ -248,7 +248,7 @@ void datenow(){
  }
   
 void sendData(){
-    uri = "/invernadero/Lectorjson.php?"+datos;
+    uri = "/invernadero/writejson.php?"+datos;
 
     //AT command para iniciar conexion como cliente tipo TCP por el puerto 80
     Serial1.println("AT+CIPSTART=\"TCP\",\""+ server +"\",80");
