@@ -40,40 +40,44 @@ $inttiem4 = $_GET['tiemp4'];
   $dbuser = "invernadero";
   $password = "123456";
   $dbname = "sensorial";
- 
+
   $database = new mysqli($dbserver, $dbuser, $password, $dbname);
 
   if($database->connect_errno) {
     die("No se pudo conectar a la base de datos");
   }
 
-//Seleccion de datos historicos 
+//Seleccion de datos historicos
   	$queryconsul = "SELECT PROY_CODE FROM PROYECTO WHERE ACTIVO = 1";
 	$resultact = $database->query($queryconsul);
 
 	while ($registrProy = mysqli_fetch_array($resultact)) {
 		# code...
-		$query = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO) VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp1.', '.$inthum1.', '.$intextrac1.', '.$intnebuli1.', '.$inttiem1.') ';     // Esta linea hace la consulta 
-    	$result = $database->query($query);  
+		$query = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO)
+							VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp1.', '.$inthum1.', '.$intextrac1.', '.$intnebuli1.', '.$inttiem1.'),
+							('.$registrProy['PROY_CODE'].', '.$inttemp2.', '.$inthum2.', '.$intextrac2.', '.$intnebuli2.', '.$inttiem2.'),
+							('.$registrProy['PROY_CODE'].', '.$inttemp3.', '.$inthum3.', '.$intextrac3.', '.$intnebuli3.', '.$inttiem3.'),
+							('.$registrProy['PROY_CODE'].', '.$inttemp4.', '.$inthum4.', '.$intextrac4.', '.$intnebuli4.', '.$inttiem4.')';     // Esta linea hace la consulta
+    	$result = $database->query($query);
+/*
+    	$query1 = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO) VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp2.', '.$inthum2.', '.$intextrac2.', '.$intnebuli2.', '.$inttiem2.') ';     // Esta linea hace la consulta
+    	$result1 = $database->query($query1);
 
-    	$query1 = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO) VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp2.', '.$inthum2.', '.$intextrac2.', '.$intnebuli2.', '.$inttiem2.') ';     // Esta linea hace la consulta 
-    	$result1 = $database->query($query1); 
-
-    	$query2 = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO) VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp3.', '.$inthum3.', '.$intextrac3.', '.$intnebuli3.', '.$inttiem3.') ';     // Esta linea hace la consulta 
+    	$query2 = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO) VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp3.', '.$inthum3.', '.$intextrac3.', '.$intnebuli3.', '.$inttiem3.') ';     // Esta linea hace la consulta
     	$result2 = $database->query($query2);
 
-    	$query3 = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO) VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp4.', '.$inthum4.', '.$intextrac4.', '.$intnebuli4.', '.$inttiem4.') ';     // Esta linea hace la consulta 
-    	$result3 = $database->query($query3);  
+    	$query3 = 'INSERT INTO STATUS_RECORD (PROY_CODE, TEMPERATURA, HUMEDAD, EXTRACTORES, NEBULIZADORES, TIEMPO) VALUES ('.$registrProy['PROY_CODE'].', '.$inttemp4.', '.$inthum4.', '.$intextrac4.', '.$intnebuli4.', '.$inttiem4.') ';     // Esta linea hace la consulta
+    	$result3 = $database->query($query3);  */
 
-    	if($result == TRUE || $result1 == TRUE || $result2 == TRUE || $result3 == TRUE ){
-		
+    	if($result == TRUE ){
+
 		} else {
 		echo "Error: ".$sql."<br>".$result1->error;
 		}
     	$codProy = $registrProy['PROY_CODE'];
 	}
-	
-    
+
+
 
 	//echo "Numero: ".$nu1."<br>";
 
@@ -82,7 +86,7 @@ $inttiem4 = $_GET['tiemp4'];
 
 	while ( $registroParam = mysqli_fetch_array($resultParam)) {
 		# code...
-	
+
 	$response = array(
 				"HumedadMiin" => $resultParam['HUM_MIN'],
 				"TemperaturaMax" => $resultParam['TEM_MAX']
@@ -92,7 +96,7 @@ $inttiem4 = $_GET['tiemp4'];
 	echo $json_response;
 
 	}
-	
+
 
 
 $database->close();
