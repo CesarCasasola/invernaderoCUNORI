@@ -18,13 +18,13 @@
    die("No se pudo conectar a la base de datos");
  }
 
-  if(empty($_GET['temp1']) or empty($_GET['hume1'])  or empty($_GET['extrac1']) or empty($_GET['nebu1']) or empty($_GET['tiemp1'])
+  /*if(empty($_GET['temp1']) or empty($_GET['hume1'])  or empty($_GET['extrac1']) or empty($_GET['nebu1']) or empty($_GET['tiemp1'])
 	or empty($_GET['temp2']) or empty($_GET['hume2'])  or empty($_GET['extrac2']) or empty($_GET['nebu2']) or empty($_GET['tiemp2'])
 	or empty($_GET['temp3']) or empty($_GET['hume3'])  or empty($_GET['extrac3']) or empty($_GET['nebu3']) or empty($_GET['tiemp3'])
 	or empty($_GET['temp4']) or empty($_GET['hume4'])  or empty($_GET['extrac4']) or empty($_GET['nebu4']) or empty($_GET['tiemp4'])){
 		echo "ERROR - Cadena Vacia";
 		exit();
-	}
+	}*/
 
   $inttemp1 =(float)$_GET['temp1'];
 	$inthum1 =(float)$_GET['hume1'];
